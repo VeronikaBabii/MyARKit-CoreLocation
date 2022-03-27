@@ -7,6 +7,8 @@
 
 import UIKit
 
+// TODO: all move to UIViewControlller extension
+
 extension UIView {
     func add(_ subviews: UIView...) {
         subviews.forEach(addSubview)

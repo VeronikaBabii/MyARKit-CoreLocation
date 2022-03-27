@@ -2,15 +2,11 @@
 //  Coordinator.swift
 //  MyARCL
 //
-//  Created by Veronika on 14.03.2021.
+//  Created by Veronika Babii on 14.03.2021.
 //
 
 import UIKit
 
-protocol Coordinator: class { }
-
-protocol CoordinatorDelegate: class { }
-
-enum CoordinatorType {
-    case main, backMap, mapsearch, nav
+protocol Coordinator {
+    var navigationController: UINavigationController { get set }
 }

@@ -1,8 +1,8 @@
 //
-//  MapSearchVC.swift
+//  MapSearchViewController.swift
 //  MyARCL
 //
-//  Created by Veronika on 14.03.2021.
+//  Created by Veronika Babii on 14.03.2021.
 //
 
 import MapKit
@@ -12,9 +12,9 @@ protocol MapSearchVCDelegate: class {
     func navigateInAR(data: [RouteLeg])
 }
 
-final class MapSearchVC: UIViewController, Controller {
+class MapSearchViewController: UIViewController {
     
-    var coordType: CoordinatorType = .mapsearch
+    // MARK: - Properties
     
     private var currRouteLegs: [[CLLocationCoordinate2D]] = []
     
@@ -47,41 +47,70 @@ final class MapSearchVC: UIViewController, Controller {
     
     private var pointColor = UIColor.systemPink
     
-    @IBOutlet private weak var mapView: MKMapView!
-    @IBOutlet private weak var instructionsLabel: UILabel!
+    let mapView = MKMapView()
+    let instructionsLabel = UILabel()
+    
+    // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setup()
     }
     
+    // MARK: - Methods
+    
     func setup() {
         navigationController?.isNavigationBarHidden = true
+        setupMapView()
+        setupLabel()
         
         if ARConfiguration.isSupported {
-            
             locationMngr.delegate = self
             locationMngr.startUpdatingLocation(locationManager: locationMngr.locationManager!)
             
-            
-            let screenPress = UILongPressGestureRecognizer(target: self,
-                                                           action: #selector(setDestLocationOnMap(gesture:)))
+            let screenPress = UILongPressGestureRecognizer(target: self, action: #selector(setDestLocationOnMap(_:)))
             screenPress.minimumPressDuration = 0.3
             mapView.addGestureRecognizer(screenPress)
             mapView.delegate = self
-            
         } else {
             print("ARKit functionality is not supported by your phone :(")
             return
         }
     }
     
-    @objc func setDestLocationOnMap(gesture: UIGestureRecognizer) {
+    func setupMapView() {
+        mapView.isZoomEnabled = true
+        mapView.isPitchEnabled = true
+        mapView.isUserInteractionEnabled = true
+        mapView.showsBuildings = true
+        mapView.isRotateEnabled = true
+        mapView.showsCompass = true
+        mapView.showsUserLocation = true
+        self.view.addSubview(mapView)
+        mapView.translatesAutoresizingMaskIntoConstraints = false
+        mapView.topAnchor.constraint(equalTo: self.view.topAnchor).isActive = true
+        mapView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor).isActive = true
+        mapView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor).isActive = true
+        mapView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor).isActive = true
+    }
+    
+    func setupLabel() {
+        instructionsLabel.text = "Press on a place\nyou wanna go"
+        instructionsLabel.font = UIFont.systemFont(ofSize: 17, weight: .regular)
+        instructionsLabel.textColor = .lightGray
+        instructionsLabel.textAlignment = .center
+        instructionsLabel.numberOfLines = 0
+        self.mapView.addSubview(instructionsLabel)
+        instructionsLabel.translatesAutoresizingMaskIntoConstraints = false
+        instructionsLabel.centerXAnchor.constraint(equalTo: self.mapView.centerXAnchor).isActive = true
+        instructionsLabel.centerYAnchor.constraint(equalTo: self.mapView.centerYAnchor).isActive = true
+    }
+    
+    @objc func setDestLocationOnMap(_ gesture: UIGestureRecognizer) {
         
         instructionsLabel.isHidden = true
         
-        if gesture.state != UIGestureRecognizer.State.began
-        { return }
+        if gesture.state != UIGestureRecognizer.State.began { return }
         let tapPoint = gesture.location(in: mapView)
         let coordinate: CLLocationCoordinate2D = mapView.convert(tapPoint, toCoordinateFrom: mapView)
         destLocation = coordinate
@@ -101,7 +130,7 @@ final class MapSearchVC: UIViewController, Controller {
                     
                     for step in steps {
                         self.points.append(Annotation(title: "T " + step.instructions,
-                                           coordinate: step.locFromStep().coordinate))
+                                           coordinate: step.locationFromStep().coordinate))
                     }
                     
                     self.routeSteps.append(contentsOf: steps)
@@ -190,7 +219,7 @@ final class MapSearchVC: UIViewController, Controller {
 }
 
 // MARK: -
-extension MapSearchVC {
+extension MapSearchViewController {
     
     /// add calculated distances to points and locations arrays
     private func update(interLocs: [CLLocationCoordinate2D]) {
@@ -221,7 +250,7 @@ extension MapSearchVC {
                 if let title = point.title, title.hasPrefix("T") { self.pointColor = #colorLiteral(red: 0.8078431487, green: 0.02745098062, blue: 0.3333333433, alpha: 1) }
                 else { self.pointColor = #colorLiteral(red: 0.2588235438, green: 0.7568627596, blue: 0.9686274529, alpha: 1) }
                 
-                self.mapView?.addAnnotation(point)
+                self.mapView.addAnnotation(point)
                 self.mapView.addOverlay(MKCircle(center: point.coordinate, radius: 0.2))
             }
         }
@@ -230,7 +259,7 @@ extension MapSearchVC {
 
 // MARK: - LocationDelegate
 
-extension MapSearchVC: LocationDelegate, AlertMessage {
+extension MapSearchViewController: LocationDelegate, AlertMessage {
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         print(status)
@@ -260,7 +289,7 @@ extension MapSearchVC: LocationDelegate, AlertMessage {
 
 // MARK: - MKMapViewDelegate
 
-extension MapSearchVC: MKMapViewDelegate {
+extension MapSearchViewController: MKMapViewDelegate {
     
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         let cr = MKCircleRenderer(overlay: overlay)
@@ -271,7 +300,7 @@ extension MapSearchVC: MKMapViewDelegate {
 }
 
 // MARK: -
-extension MapSearchVC {
+extension MapSearchViewController {
     
     func createRouteLegFrom(_ routeStep: MKRoute.Step, _ index: Int) {
         
@@ -329,7 +358,7 @@ extension MapSearchVC {
 }
 
 // MARK: -
-extension MapSearchVC {
+extension MapSearchViewController {
     
     // MKRoute - whole route from start to the end
     // MKRoute.Step - each step of this route

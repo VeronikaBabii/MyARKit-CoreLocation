@@ -1,18 +1,16 @@
 //
-//  NavVC.swift
+//  NavigationViewController.swift
 //  MyARCL
 //
-//  Created by Veronika on 14.03.2021.
+//  Created by Veronika Babii on 14.03.2021.
 //
 
 import ARKit
 import MapKit
 
-class NavVC: UIViewController, Controller {
+class NavigationViewController: UIViewController {
     
-    // MARK: - properties
-    
-    var coordType: CoordinatorType = .nav
+    // MARK: - Properties
 
     private var sphereNodes: [SphereNode] = []
     
@@ -36,25 +34,64 @@ class NavVC: UIViewController, Controller {
     
     private var miniMap: MKMapCompassView!
     
-    // MARK: - IBs
+    let sceneView = NavView()
+    let instructionsLabel = UILabel()
+    let lastLocationInLegLabel = UILabel()
+    let userLocationLabel = UILabel()
+    let consoleLabel = UILabel()
     
-    @IBOutlet private weak var sceneView: NavView!
-    @IBOutlet private weak var instructionsLabel: UILabel!
-    
-    @IBOutlet private weak var lastLocationInLeg: UILabel!
-    @IBOutlet private weak var userLocation: UILabel!
-    @IBOutlet private weak var consoleLabel: UILabel!
-    
-    // MARK: - code
+    // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupUI()
         setup()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         sceneView.session.pause()
+    }
+    
+    // MARK: - Methods
+    
+    func setupUI() {
+        sceneView.isUserInteractionEnabled = true
+        self.view.addSubview(sceneView)
+        sceneView.translatesAutoresizingMaskIntoConstraints = false
+        sceneView.topAnchor.constraint(equalTo: self.view.topAnchor).isActive = true
+        sceneView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor).isActive = true
+        sceneView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor).isActive = true
+        sceneView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor).isActive = true
+        
+        instructionsLabel.text = "Tap to create a route"
+        instructionsLabel.textColor = .white
+        instructionsLabel.font = UIFont.systemFont(ofSize: 17, weight: .regular)
+        self.sceneView.addSubview(instructionsLabel)
+        instructionsLabel.translatesAutoresizingMaskIntoConstraints = false
+        instructionsLabel.centerYAnchor.constraint(equalTo: self.sceneView.centerYAnchor).isActive = true
+        instructionsLabel.centerXAnchor.constraint(equalTo: self.sceneView.centerXAnchor).isActive = true
+        
+        lastLocationInLegLabel.textColor = .white
+        lastLocationInLegLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        self.sceneView.addSubview(lastLocationInLegLabel)
+        lastLocationInLegLabel.translatesAutoresizingMaskIntoConstraints = false
+        lastLocationInLegLabel.bottomAnchor.constraint(equalTo: self.sceneView.bottomAnchor, constant: -60).isActive = true
+        lastLocationInLegLabel.trailingAnchor.constraint(equalTo: self.sceneView.trailingAnchor, constant: -10).isActive = true
+        
+        userLocationLabel.textColor = .white
+        userLocationLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        self.sceneView.addSubview(userLocationLabel)
+        userLocationLabel.translatesAutoresizingMaskIntoConstraints = false
+        userLocationLabel.bottomAnchor.constraint(equalTo: self.lastLocationInLegLabel.topAnchor, constant: -10).isActive = true
+        userLocationLabel.trailingAnchor.constraint(equalTo: self.sceneView.trailingAnchor, constant: -10).isActive = true
+        
+        consoleLabel.textColor = .white
+        consoleLabel.font = UIFont.systemFont(ofSize: 14, weight: .regular)
+        self.sceneView.addSubview(consoleLabel)
+        consoleLabel.translatesAutoresizingMaskIntoConstraints = false
+        consoleLabel.bottomAnchor.constraint(equalTo: self.userLocationLabel.topAnchor, constant: -10).isActive = true
+        consoleLabel.trailingAnchor.constraint(equalTo: self.sceneView.trailingAnchor, constant: -10).isActive = true
     }
     
     func setup() {
@@ -116,7 +153,7 @@ class NavVC: UIViewController, Controller {
     /// update positions of spheres on route
     private func updateArRoute() {
         if updatedLocs.count > 0 {
-            startLocation = CLLocation().mostAccurateLocFrom(locations: updatedLocs)
+            startLocation = CLLocation().mostAccurateLocationFrom(updatedLocs)
             transNodesLocations()
         }
     }
@@ -124,11 +161,11 @@ class NavVC: UIViewController, Controller {
     private func transNodesLocations() {
         for sphere in sphereNodes {
             
-            let trans = TransMatrix.transformCoordinates(startLoc: startLocation,
-                                                               location: sphere.location)
+            let transformationMatrix = TransformationMatrix.transformCoordinates(initialLocation: startLocation,
+                                                                                 location: sphere.location)
             
-            sphere.anchor = ARAnchor(transform: trans)
-            sphere.position = SCNVector3.transCoordinates(trans)
+            sphere.anchor = ARAnchor(transform: transformationMatrix)
+            sphere.position = SCNVector3.transformVectorCoordinates(by: transformationMatrix)
         }
     }
     
@@ -141,7 +178,7 @@ class NavVC: UIViewController, Controller {
         
         if updatedLocs.count > 0 {
             
-            startLocation = CLLocation().mostAccurateLocFrom(locations: updatedLocs)
+            startLocation = CLLocation().mostAccurateLocationFrom(updatedLocs)
             
             if startLocation != nil  {
                 self.cleanup()
@@ -160,14 +197,14 @@ class NavVC: UIViewController, Controller {
 
 // MARK: - ARSCNViewDelegate
 
-extension NavVC: ARSCNViewDelegate {
+extension NavigationViewController: ARSCNViewDelegate {
     
     private func addLabelSphere(routeStep: RouteLeg) {
         let stepLoc = CLLocation(latitude: routeStep.coordinates[0].latitude,
                                  longitude: routeStep.coordinates[0].longitude)
         
-        let locTrans = TransMatrix.transformCoordinates(startLoc: startLocation,
-                                                        location: stepLoc)
+        let locTrans = TransformationMatrix.transformCoordinates(initialLocation: startLocation,
+                                                                 location: stepLoc)
         
         let sphereAnchor = ARAnchor(transform: locTrans)
         spheresAnchors.append(sphereAnchor)
@@ -190,7 +227,7 @@ extension NavVC: ARSCNViewDelegate {
     
     private func addSphere(location: CLLocation) {
         
-        let locTrans = TransMatrix.transformCoordinates(startLoc: startLocation,
+        let locTrans = TransformationMatrix.transformCoordinates(initialLocation: startLocation,
                                                                  location: location)
         
         let sphereAnchor = ARAnchor(transform: locTrans)
@@ -210,7 +247,7 @@ extension NavVC: ARSCNViewDelegate {
 
 // MARK: - ARSessionDelegate
 
-extension NavVC: ARSessionDelegate {
+extension NavigationViewController: ARSessionDelegate {
     
     private func addRouteSpheres(steps: [RouteLeg]) {
         
@@ -253,8 +290,8 @@ extension NavVC: ARSessionDelegate {
         let shortCLa = makePrettyCoord(currLoc.latitude)
         let shortCLo = makePrettyCoord(currLoc.longitude)
         
-        lastLocationInLeg.text = "last: \(shortLLa), \(shortLLo)"
-        userLocation.text = "curr: \(shortCLa), \(shortCLo)"
+        lastLocationInLegLabel.text = "last: \(shortLLa), \(shortLLo)"
+        userLocationLabel.text = "curr: \(shortCLa), \(shortCLo)"
         
         if shortLLa == shortCLa || shortLLo == shortCLo {
             
@@ -277,13 +314,13 @@ extension NavVC: ARSessionDelegate {
     
     // from latitude/longitude to rounded double
     private func makePrettyCoord(_ coord: CLLocationDegrees) -> Double {
-        return Double(coord).rounded(toPlaces: 6)
+        return Double(coord).rounded(to: 6)
     }
 }
 
 // MARK: - LocationDelegate, AlertMessage
 
-extension NavVC: LocationDelegate, AlertMessage {
+extension NavigationViewController: LocationDelegate, AlertMessage {
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         print(status)
@@ -304,7 +341,7 @@ extension NavVC: LocationDelegate, AlertMessage {
     }
 }
 
-extension NavVC {
+extension NavigationViewController {
     func session(_ session: ARSession, didFailWithError error: Error) {
         print("Session Failed - probably due to lack of camera access")
         locationService.stopUpdatingLocation(locationManager: locationManager)
@@ -324,5 +361,5 @@ extension NavVC {
     }
 }
 
-extension NavVC: MKMapViewDelegate {}
+extension NavigationViewController: MKMapViewDelegate {}
 class NavView: ARSCNView {}

@@ -1,5 +1,5 @@
 //
-//  MainVC.swift
+//  MainViewController.swift
 //  MyARCL
 //
 //  Created by Veronika Babii on 04.05.2021.
@@ -7,32 +7,27 @@
 
 import UIKit
 
-final class MainVC: UIViewController, Controller {
-    
-    var coordType: CoordinatorType = .main
+class MainViewController: UIViewController {
     
     @IBOutlet weak var startButton: UIButton!
-    
-    @IBAction func toBackMapTapped(_ sender: UIButton) {
-        print("tapped")
-        let vc: BackMapVC = BackMapVC()
-        vc.modalPresentationStyle = .fullScreen
-        self.present(vc, animated: false, completion: nil)
-        
-    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationController?.setNavigationBarHidden(true, animated: false)
-        design()
+        setupUI()
     }
     
-    func design() {
-        
+    func setupUI() {
         let bezierPath = UIBezierPath(roundedRect: startButton.bounds, cornerRadius: 15)
-        
         let maskLayer = CAShapeLayer()
         maskLayer.path = bezierPath.cgPath
         startButton.layer.mask = maskLayer
+    }
+    
+    @IBAction func toBackMapTapped(_ sender: UIButton) {
+        // TODO: add coordinator usage
+        let vc = BackMapViewController()
+        vc.modalPresentationStyle = .fullScreen
+        self.present(vc, animated: false)
     }
 }
