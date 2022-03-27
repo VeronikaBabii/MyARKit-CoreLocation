@@ -333,26 +333,6 @@ extension MapSearchViewController {
             let routeLeg = RouteLeg(directions: routeStep.instructions, coordinates: interSteps)
             
             if !routeLegs.contains(routeLeg) { routeLegs.append(routeLeg) }
-            
-            //        var currLeg = newLegs[newLegs.count-1]
-            //        if currLeg.coordinates.count > 11 {
-            //
-            //            let count = currLeg.coordinates.count
-            //            print("all: \(count) - \(currLeg.coordinates)")
-            //
-            //            var newStepCoords: [CLLocationCoordinate2D] = []
-            //
-            //            for (index, coord) in currLeg.coordinates.enumerated() {
-            //
-            //                if index > (count-1)/2 {
-            //                    print(index)
-            //                    currLeg.coordinates.remove(at: index)
-            //                    newStepCoords.append(coord)
-            //                }
-            //            }
-            //            print("newStep: \(newStepCoords)")
-            //
-            //        }
         }
     }
 }
