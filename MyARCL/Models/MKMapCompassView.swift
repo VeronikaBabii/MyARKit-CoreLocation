@@ -1,8 +1,8 @@
 //
-//  MapBox.swift
+//  MKMapCompassView.swift
 //  MyARCL
 //
-//  Created by Veronika on 30.03.2021.
+//  Created by Veronika Babii on 30.03.2021.
 //
 
 import MapKit
@@ -28,14 +28,5 @@ class MKMapCompassView: MKMapView {
         let maskLayer = CAShapeLayer()
         maskLayer.path = bezierPath.cgPath
         self.layer.mask = maskLayer
-    }
-}
-
-extension MKRoute.Step {
-    
-    /// get CLLocation from a route step
-    func locFromStep() -> CLLocation {
-        return CLLocation(latitude: polyline.coordinate.latitude,
-                          longitude: polyline.coordinate.longitude)
     }
 }

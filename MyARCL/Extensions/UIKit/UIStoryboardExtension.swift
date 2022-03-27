@@ -1,8 +1,8 @@
 //
-//  UIStoryboardExt.swift
+//  UIStoryboardExtension.swift
 //  MyARCL
 //
-//  Created by Veronika on 14.03.2021.
+//  Created by Veronika Babii on 14.03.2021.
 //
 
 import UIKit
