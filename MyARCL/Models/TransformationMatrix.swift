@@ -32,7 +32,7 @@ class TransformationMatrix {
         
         let distanceToInitial = Float(location.distance(from: initialLocation))
         
-        let bearing = Float(initialLocation.angleBetweenCurrentLocation(and: location))
+        let bearing = Float(initialLocation.angleBetweenThisLocation(and: location))
         
         let translationVector = vector_float4(0.0, 0.0, -distanceToInitial, 0.0)
         

@@ -54,21 +54,21 @@ class MapSearchViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        setup()
+        setupUI()
     }
     
     // MARK: - Methods
     
-    func setup() {
+    func setupUI() {
         navigationController?.isNavigationBarHidden = true
         setupMapView()
-        setupLabel()
+        setupInstructionsLabel()
         
         if ARConfiguration.isSupported {
             locationMngr.delegate = self
             locationMngr.startUpdatingLocation(locationManager: locationMngr.locationManager!)
             
-            let screenPress = UILongPressGestureRecognizer(target: self, action: #selector(setDestLocationOnMap(_:)))
+            let screenPress = UILongPressGestureRecognizer(target: self, action: #selector(setDestinationLocationOnMap))
             screenPress.minimumPressDuration = 0.3
             mapView.addGestureRecognizer(screenPress)
             mapView.delegate = self
@@ -94,7 +94,7 @@ class MapSearchViewController: UIViewController {
         mapView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor).isActive = true
     }
     
-    func setupLabel() {
+    func setupInstructionsLabel() {
         instructionsLabel.text = "Press on a place\nyou wanna go"
         instructionsLabel.font = UIFont.systemFont(ofSize: 17, weight: .regular)
         instructionsLabel.textColor = .lightGray
@@ -106,8 +106,7 @@ class MapSearchViewController: UIViewController {
         instructionsLabel.centerYAnchor.constraint(equalTo: self.mapView.centerYAnchor).isActive = true
     }
     
-    @objc func setDestLocationOnMap(_ gesture: UIGestureRecognizer) {
-        
+    @objc func setDestinationLocationOnMap(_ gesture: UIGestureRecognizer) {
         instructionsLabel.isHidden = true
         
         if gesture.state != UIGestureRecognizer.State.began { return }
@@ -117,7 +116,6 @@ class MapSearchViewController: UIViewController {
     }
     
     private func createStepsRoute() {
-        
         let group = DispatchGroup()
         group.enter()
         
@@ -144,7 +142,6 @@ class MapSearchViewController: UIViewController {
     }
     
     func formLegs() {
-        
         for (index, step) in self.routeSteps.enumerated() {
             self.createRouteLegFrom(step, index)
         }
@@ -157,7 +154,6 @@ class MapSearchViewController: UIViewController {
     }
     
     func updateRoute(with legs: [RouteLeg]) {
-        
         routeData = legs
         
         for (index, leg) in legs.enumerated() {
@@ -302,36 +298,29 @@ extension MapSearchViewController: MKMapViewDelegate {
 // MARK: -
 extension MapSearchViewController {
     
-    func createRouteLegFrom(_ routeStep: MKRoute.Step, _ index: Int) {
+    func createRouteLegFrom(_ routeStep: MKRoute.Step, _ legIndex: Int) {
         
-        // first leg
-        if index == 0 {
+        if legIndex == 0 {
             let nextLocation = CLLocation(latitude: routeStep.polyline.coordinate.latitude,
                                           longitude: routeStep.polyline.coordinate.longitude)
             
-            let interSteps = CLLocationCoordinate2D.getInterLocs(currLocation: startLocation,
-                                                                 destLocation: nextLocation)
-            currRouteLegs.append(interSteps)
+            let intermediateSteps = CLLocationCoordinate2D.getIntermediateLocations(from: startLocation, to: nextLocation)
+            currRouteLegs.append(intermediateSteps)
             
-            let routeLeg = RouteLeg(directions: routeStep.instructions, coordinates: interSteps)
-            
+            let routeLeg = RouteLeg(directions: routeStep.instructions, coordinates: intermediateSteps)
             if !routeLegs.contains(routeLeg) { routeLegs.append(routeLeg) }
-        }
-        // another legs
-        else {
-            let prevStep = routeSteps[index - 1]
+        } else {
+            let prevStep = routeSteps[legIndex - 1]
             let prevLocation = CLLocation(latitude: prevStep.polyline.coordinate.latitude,
                                           longitude: prevStep.polyline.coordinate.longitude)
             
             let nextLocation = CLLocation(latitude: routeStep.polyline.coordinate.latitude,
                                           longitude: routeStep.polyline.coordinate.longitude)
             
-            let interSteps = CLLocationCoordinate2D.getInterLocs(currLocation: prevLocation,
-                                                                 destLocation: nextLocation)
-            currRouteLegs.append(interSteps)
+            let intermediateSteps = CLLocationCoordinate2D.getIntermediateLocations(from: prevLocation, to: nextLocation)
+            currRouteLegs.append(intermediateSteps)
             
-            let routeLeg = RouteLeg(directions: routeStep.instructions, coordinates: interSteps)
-            
+            let routeLeg = RouteLeg(directions: routeStep.instructions, coordinates: intermediateSteps)
             if !routeLegs.contains(routeLeg) { routeLegs.append(routeLeg) }
         }
     }

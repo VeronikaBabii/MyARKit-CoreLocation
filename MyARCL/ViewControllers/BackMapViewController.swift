@@ -51,17 +51,19 @@ class BackMapViewController: UIViewController {
         edgesForExtendedLayout = []
         
         DispatchQueue.main.async {
-            self.view.add(self.backMapView)
-            self.backMapView.translatesAutoresizingMaskIntoConstraints = false
-            
-            self.backMapView.topAnchor.constraint(equalTo: self.view.layoutMarginsGuide.topAnchor).isActive = true
-            self.backMapView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: 0).isActive = true
-            self.backMapView.widthAnchor.constraint(equalTo: self.view.widthAnchor, multiplier: 1).isActive = true
-            self.backMapView.centerXAnchor.constraint(equalTo: self.view.centerXAnchor, constant: 0).isActive = true
-            
-            self.backMapView.layoutIfNeeded()
-            self.backMapView.backgroundColor = .blue
+            self.setupBackMapView()
         }
+    }
+    
+    func setupBackMapView() {
+        self.backMapView.layoutIfNeeded()
+        self.backMapView.backgroundColor = .blue
+        self.view.add(self.backMapView)
+        self.backMapView.translatesAutoresizingMaskIntoConstraints = false
+        self.backMapView.topAnchor.constraint(equalTo: self.view.layoutMarginsGuide.topAnchor).isActive = true
+        self.backMapView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: 0).isActive = true
+        self.backMapView.widthAnchor.constraint(equalTo: self.view.widthAnchor, multiplier: 1).isActive = true
+        self.backMapView.centerXAnchor.constraint(equalTo: self.view.centerXAnchor, constant: 0).isActive = true
     }
 }
 

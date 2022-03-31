@@ -45,7 +45,7 @@ class NavigationViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setup()
+        setupLocating()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -53,9 +53,19 @@ class NavigationViewController: UIViewController {
         sceneView.session.pause()
     }
     
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        screenTouched()
+    }
+    
     // MARK: - Methods
     
     func setupUI() {
+        navigationController?.setNavigationBarHidden(true, animated: false)
+        
+        sceneView.preferredFramesPerSecond = 30
+        sceneView.showsStatistics = true
+        sceneView.delegate = self
+        sceneView.session.delegate = self
         sceneView.isUserInteractionEnabled = true
         self.view.addSubview(sceneView)
         sceneView.translatesAutoresizingMaskIntoConstraints = false
@@ -92,62 +102,34 @@ class NavigationViewController: UIViewController {
         consoleLabel.translatesAutoresizingMaskIntoConstraints = false
         consoleLabel.bottomAnchor.constraint(equalTo: self.userLocationLabel.topAnchor, constant: -10).isActive = true
         consoleLabel.trailingAnchor.constraint(equalTo: self.sceneView.trailingAnchor, constant: -10).isActive = true
-    }
-    
-    func setup() {
-        sceneView.preferredFramesPerSecond = 30
         
-        miniMap = MKMapCompassView(frame: CGRect(x: 20, y: 20, width: view.bounds.width / 2.7,
-                                                               height: view.bounds.width / 2.7))
+        miniMap = MKMapCompassView(frame: CGRect(x: 20, y: 20, width: view.bounds.width / 2.7, height: view.bounds.width / 2.7))
         miniMap.tintColor = .black
         miniMap.delegate = self
         view.insertSubview(miniMap, aboveSubview: sceneView)
-        setCompassConstraints()
-        
-        sceneView.showsStatistics = true
-        sceneView.delegate = self
-        
+        miniMap.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 12).isActive = true
+        miniMap.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 12).isActive = true
+        miniMap.heightAnchor.constraint(equalTo: self.view.widthAnchor, multiplier: 0.3).isActive = true
+        miniMap.widthAnchor.constraint(equalTo: self.view.widthAnchor, multiplier: 0.3).isActive = true
+    }
+    
+    func setupLocating() {
         locationService.startUpdatingLocation(locationManager: locationService.locationManager!)
         locationService.delegate = self
         
-        navigationController?.setNavigationBarHidden(true, animated: false)
-        
-        sceneView.delegate = self
-        sceneView.session.delegate = self
         runARSession()
     }
     
-    func setCompassConstraints() {
-        miniMap.leadingAnchor.constraint(equalTo: self.view.leadingAnchor,
-                                                constant: 12).isActive = true
-        
-        miniMap.topAnchor.constraint(equalTo: view.topAnchor,
-                                            constant: 12).isActive = true
-        
-        let mult: CGFloat = 0.3
-        miniMap.heightAnchor.constraint(equalTo: view.widthAnchor,
-                                               multiplier: mult).isActive = true
-        
-        miniMap.widthAnchor.constraint(equalTo: view.widthAnchor,
-                                              multiplier: mult).isActive = true
-    }
-    
     func runARSession() {
-        
-        configuration.videoFormat = ARWorldTrackingConfiguration.supportedVideoFormats[1]
-        // 0 - imageResolution=(1920, 1440) framesPerSecond=(60)
-        // 1 - imageResolution=(1920, 1080) framesPerSecond=(60)
-        // 2 - imageResolution=(1280, 720) framesPerSecond=(60)
-        print(configuration.videoFormat)
-        
         configuration.planeDetection = .horizontal
         configuration.worldAlignment = .gravityAndHeading
         configuration.isLightEstimationEnabled = false
+        configuration.videoFormat = ARWorldTrackingConfiguration.supportedVideoFormats[1]
+        /* 0 - imageResolution=(1920, 1440) framesPerSecond=(60)
+           1 - imageResolution=(1920, 1080) framesPerSecond=(60)
+           2 - imageResolution=(1280, 720) framesPerSecond=(60) */
+        
         sceneView.session.run(configuration)
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
     }
     
     /// update positions of spheres on route
@@ -167,10 +149,6 @@ class NavigationViewController: UIViewController {
             sphere.anchor = ARAnchor(transform: transformationMatrix)
             sphere.position = SCNVector3.transformVectorCoordinates(by: transformationMatrix)
         }
-    }
-    
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        screenTouched()
     }
     
     func screenTouched() {
@@ -345,8 +323,7 @@ extension NavigationViewController {
     func session(_ session: ARSession, didFailWithError error: Error) {
         print("Session Failed - probably due to lack of camera access")
         locationService.stopUpdatingLocation(locationManager: locationManager)
-        showAlert(title: "Problem while scanning your surroundings!",
-                       message: "Please restart the app")
+        showAlert(title: "Problem while scanning your surroundings!", message: "Please restart the app")
     }
     
     func sessionWasInterrupted(_ session: ARSession) {

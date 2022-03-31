@@ -14,42 +14,33 @@ extension CLLocationCoordinate2D: Equatable {
         return lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
     }
     
-    func createCoordinateFrom(_ bearing: Double, _ distance: Double) -> CLLocationCoordinate2D {
-        
+    func createCoordinateFor(_ bearing: Double, _ distance: Double) -> CLLocationCoordinate2D {
         let distRadiansLat = distance / 6373000.0
         let distRadiansLong = distance /  5602900.0
         
-        let lat1 = self.latitude.toRadians()
-        let lon1 = self.longitude.toRadians()
+        let currLattitude = self.latitude.toRadians()
+        let currLongitude = self.longitude.toRadians()
         
-        let lat2 = asin(sin(lat1) * cos(distRadiansLat) + cos(lat1)
-                                  * sin(distRadiansLat) * cos(bearing))
+        let lattitude = asin(sin(currLattitude) * cos(distRadiansLat) +
+                             cos(currLattitude) * sin(distRadiansLat) * cos(bearing))
         
-        let lon2 = lon1 + atan2(sin(bearing) * sin(distRadiansLong) * cos(lat1),
-                                cos(distRadiansLong) - sin(lat1) * sin(lat2))
+        let longitude = currLongitude + atan2(sin(bearing) * sin(distRadiansLong) * cos(currLattitude),
+                                              cos(distRadiansLong) - sin(currLattitude) * sin(lattitude))
         
-        return CLLocationCoordinate2D(latitude: lat2.toDegrees(), longitude: lon2.toDegrees())
+        return CLLocationCoordinate2D(latitude: lattitude.toDegrees(), longitude: longitude.toDegrees())
     }
     
-    static func getInterLocs(currLocation: CLLocation, destLocation: CLLocation) -> [CLLocationCoordinate2D] {
-        
-        var interLocs = [CLLocationCoordinate2D]()
-        
+    static func getIntermediateLocations(from currentLocation: CLLocation, to destinationLocation: CLLocation) -> [CLLocationCoordinate2D] {
+        var intermediateLocations = [CLLocationCoordinate2D]()
         let distanceBetweenNodes: Float = 18
+        var distanceBetweenCurrAndDest = Float(destinationLocation.distance(from: currentLocation))
+        let bearingCurrToDest = currentLocation.angleBetweenThisLocation(and: destinationLocation)
         
-        var distanceCurrAndDest = Float(destLocation.distance(from: currLocation))
-        
-        let bearingCurrToDest = currLocation.angleBetweenCurrentLocation(and: destLocation)
-        
-        while distanceCurrAndDest > 18 {
-            
-            distanceCurrAndDest -= distanceBetweenNodes
-            
-            let loc = currLocation.coordinate.createCoordinateFrom(Double(bearingCurrToDest),
-                                                                   Double(distanceCurrAndDest))
-            
-            if !interLocs.contains(loc) { interLocs.append(loc) }
+        while distanceBetweenCurrAndDest > 18 {
+            distanceBetweenCurrAndDest -= distanceBetweenNodes
+            let location = currentLocation.coordinate.createCoordinateFor(Double(bearingCurrToDest), Double(distanceBetweenCurrAndDest))
+            if !intermediateLocations.contains(location) { intermediateLocations.append(location) }
         }
-        return interLocs
+        return intermediateLocations
     }
 }

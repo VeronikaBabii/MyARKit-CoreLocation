@@ -17,7 +17,7 @@ extension CLLocation {
         return sort.first!
     }
     
-    func angleBetweenCurrentLocation(and destinationLocation: CLLocation) -> Double {
+    func angleBetweenThisLocation(and destinationLocation: CLLocation) -> Double {
         let currLatitude = self.coordinate.latitude.toRadians()
         let curLongitude = self.coordinate.longitude.toRadians()
         
