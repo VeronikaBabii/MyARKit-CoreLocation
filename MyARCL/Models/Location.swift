@@ -56,7 +56,6 @@ extension Location: CLLocationManagerDelegate {
         if newDirection.headingAccuracy < 0 { return }
         if newDirection.trueHeading > 0 {
             direction = newDirection.trueHeading
-            print("Direction updated.")
         }
     }
     
