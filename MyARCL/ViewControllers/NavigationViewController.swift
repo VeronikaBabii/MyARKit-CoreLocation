@@ -8,22 +8,27 @@
 import ARKit
 import MapKit
 
-class NavigationViewController: UIViewController {
+class NavigationViewController: UIViewController, MKMapViewDelegate {
     
     // MARK: - Properties
 
+    private let sceneView = ARSCNView()
+    private let instructionsLabel = UILabel()
+    private let lastLocationInLegLabel = UILabel()
+    private let userLocationLabel = UILabel()
+    private let consoleLabel = UILabel()
+    private var miniMap: MKMapCompassView!
+    
     private var sphereNodes: [SphereNode] = []
-    
-    internal var startLocation: CLLocation!
-    
     private var spheresAnchors: [ARAnchor] = []
     
-    private var updatedLocs: [CLLocation] = []
+    internal var startLocation: CLLocation!
+    private var updatedLocations: [CLLocation] = []
     
-    private var currLeg: Int = 1
-    private var currLocation = CLLocation()
+    private var currentLeg: Int = 1
+    private var currentLocation = CLLocation()
     
-    private var methodFiredAgain = false
+    private var routeUpdated = false
     
     var routeData: [RouteLeg]!
     
@@ -31,14 +36,6 @@ class NavigationViewController: UIViewController {
     
     private var locationService = Location()
     let locationManager = CLLocationManager()
-    
-    private var miniMap: MKMapCompassView!
-    
-    let sceneView = NavView()
-    let instructionsLabel = UILabel()
-    let lastLocationInLegLabel = UILabel()
-    let userLocationLabel = UILabel()
-    let consoleLabel = UILabel()
     
     // MARK: - Lifecycle
     
@@ -59,7 +56,7 @@ class NavigationViewController: UIViewController {
     
     // MARK: - Methods
     
-    func setupUI() {
+    private func setupUI() {
         navigationController?.setNavigationBarHidden(true, animated: false)
         
         sceneView.preferredFramesPerSecond = 30
@@ -113,14 +110,14 @@ class NavigationViewController: UIViewController {
         miniMap.widthAnchor.constraint(equalTo: self.view.widthAnchor, multiplier: 0.3).isActive = true
     }
     
-    func setupLocating() {
+    private func setupLocating() {
         locationService.startUpdatingLocation(locationManager: locationService.locationManager!)
         locationService.delegate = self
         
         runARSession()
     }
     
-    func runARSession() {
+    private func runARSession() {
         configuration.planeDetection = .horizontal
         configuration.worldAlignment = .gravityAndHeading
         configuration.isLightEstimationEnabled = false
@@ -132,20 +129,16 @@ class NavigationViewController: UIViewController {
         sceneView.session.run(configuration)
     }
     
-    /// update positions of spheres on route
-    private func updateArRoute() {
-        if updatedLocs.count > 0 {
-            startLocation = CLLocation().mostAccurateLocationFrom(updatedLocs)
-            transNodesLocations()
+    private func updateARRoute() {
+        if updatedLocations.count > 0 {
+            startLocation = CLLocation().mostAccurateLocationFrom(updatedLocations)
+            updateNodesLocations()
         }
     }
     
-    private func transNodesLocations() {
+    private func updateNodesLocations() {
         for sphere in sphereNodes {
-            
-            let transformationMatrix = TransformationMatrix.transformCoordinates(initialLocation: startLocation,
-                                                                                 location: sphere.location)
-            
+            let transformationMatrix = TransformationMatrix.transformCoordinates(initialLocation: startLocation, location: sphere.location)
             sphere.anchor = ARAnchor(transform: transformationMatrix)
             sphere.position = SCNVector3.transformVectorCoordinates(by: transformationMatrix)
         }
@@ -154,18 +147,17 @@ class NavigationViewController: UIViewController {
     func screenTouched() {
         instructionsLabel.isHidden = true
         
-        if updatedLocs.count > 0 {
-            
-            startLocation = CLLocation().mostAccurateLocationFrom(updatedLocs)
+        if updatedLocations.count > 0 {
+            startLocation = CLLocation().mostAccurateLocationFrom(updatedLocations)
             
             if startLocation != nil  {
-                self.cleanup()
+                self.removeAllSphereNodes()
                 self.addRouteSpheres(steps: self.routeData)
             }
         }
     }
     
-    private func cleanup() {
+    private func removeAllSphereNodes() {
         for node in self.sphereNodes {
             node.removeFromParentNode()
         }
@@ -177,25 +169,21 @@ class NavigationViewController: UIViewController {
 
 extension NavigationViewController: ARSCNViewDelegate {
     
-    private func addLabelSphere(routeStep: RouteLeg) {
-        let stepLoc = CLLocation(latitude: routeStep.coordinates[0].latitude,
-                                 longitude: routeStep.coordinates[0].longitude)
+    private func addLabelSphere(for routeStep: RouteLeg) {
+        let stepLocation = CLLocation(latitude: routeStep.coordinates[0].latitude,
+                                      longitude: routeStep.coordinates[0].longitude)
         
-        let locTrans = TransformationMatrix.transformCoordinates(initialLocation: startLocation,
-                                                                 location: stepLoc)
+        let transformedLocation = TransformationMatrix.transformCoordinates(initialLocation: startLocation, location: stepLocation)
         
-        let sphereAnchor = ARAnchor(transform: locTrans)
+        let sphereAnchor = ARAnchor(transform: transformedLocation)
         spheresAnchors.append(sphereAnchor)
         
-        let sphereNode = SphereNode(title: routeStep.directions, location: stepLoc)
-        
-        sphereNode.addLabelSphere(radius: 0.15,
-                              text: routeStep.directions,
-                              color: #colorLiteral(red: 0.8078431487, green: 0.02745098062, blue: 0.3333333433, alpha: 1))
-        
+        let sphereNode = SphereNode(title: routeStep.directions, location: stepLocation)
         sphereNode.anchor = sphereAnchor
-        
-        sphereNode.location = stepLoc
+        sphereNode.location = stepLocation
+        sphereNode.addLabelSphere(radius: 0.15,
+                                  text: routeStep.directions,
+                                  color: #colorLiteral(red: 0.8078431487, green: 0.02745098062, blue: 0.3333333433, alpha: 1))
         
         sceneView.session.add(anchor: sphereAnchor)
         sceneView.scene.rootNode.addChildNode(sphereNode)
@@ -203,18 +191,16 @@ extension NavigationViewController: ARSCNViewDelegate {
         sphereNodes.append(sphereNode)
     }
     
-    private func addSphere(location: CLLocation) {
+    private func addSphere(at location: CLLocation) {
+        let transformedLocation = TransformationMatrix.transformCoordinates(initialLocation: startLocation, location: location)
         
-        let locTrans = TransformationMatrix.transformCoordinates(initialLocation: startLocation,
-                                                                 location: location)
-        
-        let sphereAnchor = ARAnchor(transform: locTrans)
+        let sphereAnchor = ARAnchor(transform: transformedLocation)
         spheresAnchors.append(sphereAnchor)
         
         let sphereNode = SphereNode(title: "Title", location: location)
-        sphereNode.addSphere(radius: 0.15, color: #colorLiteral(red: 0.2588235438, green: 0.7568627596, blue: 0.9686274529, alpha: 1))
         sphereNode.anchor = sphereAnchor
         sphereNode.location = location
+        sphereNode.addSphere(radius: 0.15, color: #colorLiteral(red: 0.2588235438, green: 0.7568627596, blue: 0.9686274529, alpha: 1))
         
         sceneView.session.add(anchor: sphereAnchor)
         sceneView.scene.rootNode.addChildNode(sphereNode)
@@ -228,75 +214,65 @@ extension NavigationViewController: ARSCNViewDelegate {
 extension NavigationViewController: ARSessionDelegate {
     
     private func addRouteSpheres(steps: [RouteLeg]) {
-        
         if steps.count == 0 && startLocation == nil { return }
         
         locatingLogic()
         
-        let localCurrLeg = routeData[currLeg]
+        let currentLeg = routeData[currentLeg]
         
-        for (index, location) in localCurrLeg.coordinates.enumerated() {
-            
-            if index == 0 { addLabelSphere(routeStep: localCurrLeg) }
-            else {
-                let loc = CLLocation(latitude: location.latitude, longitude: location.longitude)
-                addSphere(location: loc)
+        for (index, location) in currentLeg.coordinates.enumerated() {
+            if index == 0 {
+                addLabelSphere(for: currentLeg)
+            } else {
+                let location = CLLocation(latitude: location.latitude, longitude: location.longitude)
+                addSphere(at: location)
             }
         }
     }
     
     private func locatingLogic() {
-        
-        print("currLegNum: \(currLeg)")
-        
-        if methodFiredAgain == true && currLeg < routeData.count {
-            currLeg += 1
+        if routeUpdated == true && currentLeg < routeData.count {
+            currentLeg += 1
         }
         
-        let currLegLast2DD = routeData[currLeg].coordinates.last
-        guard let currLegLast2D = currLegLast2DD else { methodFiredAgain = true; return }
         /// set bool to next update draw next leg ->  draw only first node -> tap -> update (method fire again) -> getting next leg - drawing next leg
+        let currLegLast = routeData[currentLeg].coordinates.last
+        guard let currLegLastLoc = currLegLast else { routeUpdated = true; return }
+        let lastLocationInCurrLeg = CLLocation(latitude: currLegLastLoc.latitude, longitude: currLegLastLoc.longitude)
         
-        let currLegLastLocation = CLLocation(latitude: currLegLast2D.latitude, longitude: currLegLast2D.longitude)
+        // Compare current location with last Location in leg.
+        let lastLocationInLeg = lastLocationInCurrLeg.coordinate
+        let lastLatitude = lastLocationInLeg.latitude.roundToDouble()
+        let lastLongitude = lastLocationInLeg.longitude.roundToDouble()
         
-        /// get current location - compare with lastLegLocation
-        let lastLoc = currLegLastLocation.coordinate
-        let shortLLa = makePrettyCoord(lastLoc.latitude)
-        let shortLLo = makePrettyCoord(lastLoc.longitude)
+        let currLocation = currentLocation.coordinate
+        let currLatitude = currLocation.latitude.roundToDouble()
+        let currLongitude = currLocation.longitude.roundToDouble()
         
-        let currLoc = currLocation.coordinate
-        let shortCLa = makePrettyCoord(currLoc.latitude)
-        let shortCLo = makePrettyCoord(currLoc.longitude)
+        lastLocationInLegLabel.text = "Last loc: \(lastLatitude), \(lastLongitude)"
+        userLocationLabel.text = "Curr loc: \(currLatitude), \(currLongitude)"
         
-        lastLocationInLegLabel.text = "last: \(shortLLa), \(shortLLo)"
-        userLocationLabel.text = "curr: \(shortCLa), \(shortCLo)"
-        
-        if shortLLa == shortCLa || shortLLo == shortCLo {
-            
-            if currLeg < routeData.count {
-                let label = "starting new leg"
+        if lastLatitude == currLatitude || lastLongitude == currLongitude {
+            if currentLeg < routeData.count {
+                currentLeg += 1
                 
-                currLeg += 1
-                print("\(label): \(currLeg)")
+                let label = "Starting new route leg."
+                print("Curr leg: \(currentLeg)")
                 consoleLabel.text = label
             } else {
-                let label = "you've archived your destionation"
+                let label = "You've archived your destionation!"
                 print(label)
                 consoleLabel.text = label
             }
         } else {
-            print("not yet")
-            consoleLabel.text = "not yet"
+            let label = "Navigating..."
+            print(label)
+            consoleLabel.text = label
         }
-    }
-    
-    // from latitude/longitude to rounded double
-    private func makePrettyCoord(_ coord: CLLocationDegrees) -> Double {
-        return Double(coord).rounded(to: 6)
     }
 }
 
-// MARK: - LocationDelegate, AlertMessage
+// MARK: - LocationDelegate
 
 extension NavigationViewController: LocationDelegate, AlertMessage {
     
@@ -304,13 +280,12 @@ extension NavigationViewController: LocationDelegate, AlertMessage {
         print(status)
     }
     
-    // update locations
+    // Update locations.
     func trackingLocation(for currentLocation: CLLocation) {
         if currentLocation.horizontalAccuracy <= 100.0 {
-            print("location updated")
-            updatedLocs.append(currentLocation)
-            updateArRoute()
-            currLocation = currentLocation
+            updatedLocations.append(currentLocation)
+            updateARRoute()
+            self.currentLocation = currentLocation
         }
     }
     
@@ -320,6 +295,7 @@ extension NavigationViewController: LocationDelegate, AlertMessage {
 }
 
 extension NavigationViewController {
+    
     func session(_ session: ARSession, didFailWithError error: Error) {
         print("Session Failed - probably due to lack of camera access")
         locationService.stopUpdatingLocation(locationManager: locationManager)
@@ -333,10 +309,6 @@ extension NavigationViewController {
     
     func sessionInterruptionEnded(_ session: ARSession) {
         print("Session resumed")
-        sceneView.session.run(session.configuration!, options: [.resetTracking,
-                                                                .removeExistingAnchors])
+        sceneView.session.run(session.configuration!, options: [.resetTracking, .removeExistingAnchors])
     }
 }
-
-extension NavigationViewController: MKMapViewDelegate {}
-class NavView: ARSCNView {}

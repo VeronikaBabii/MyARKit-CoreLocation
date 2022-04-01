@@ -34,6 +34,7 @@
 		94A5345525FE582B00FBB9D4 /* SphereNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A5345425FE582B00FBB9D4 /* SphereNode.swift */; };
 		94D48A6C27F0DB8B00576D3D /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D48A6B27F0DB8B00576D3D /* AppCoordinator.swift */; };
 		94D48A6E27F0DD0900576D3D /* ControllerType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D48A6D27F0DD0900576D3D /* ControllerType.swift */; };
+		94D48A7027F6595B00576D3D /* CLLocationDegreesExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D48A6F27F6595B00576D3D /* CLLocationDegreesExtension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -66,6 +67,7 @@
 		94A5345425FE582B00FBB9D4 /* SphereNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SphereNode.swift; sourceTree = "<group>"; };
 		94D48A6B27F0DB8B00576D3D /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
 		94D48A6D27F0DD0900576D3D /* ControllerType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControllerType.swift; sourceTree = "<group>"; };
+		94D48A6F27F6595B00576D3D /* CLLocationDegreesExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationDegreesExtension.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +95,7 @@
 			children = (
 				94A5340525FE4E6C00FBB9D4 /* CLLocationExtension.swift */,
 				94857D4D27F0C78E0073A5FB /* CLLocationCoordinate2DExtension.swift */,
+				94D48A6F27F6595B00576D3D /* CLLocationDegreesExtension.swift */,
 			);
 			path = CoreLocation;
 			sourceTree = "<group>";
@@ -191,8 +194,8 @@
 			isa = PBXGroup;
 			children = (
 				94A5342925FE52D000FBB9D4 /* Coordinator.swift */,
-				94D48A6B27F0DB8B00576D3D /* AppCoordinator.swift */,
 				94D48A6D27F0DD0900576D3D /* ControllerType.swift */,
+				94D48A6B27F0DB8B00576D3D /* AppCoordinator.swift */,
 			);
 			path = Coordinators;
 			sourceTree = "<group>";
@@ -311,6 +314,7 @@
 				94A5344025FE560200FBB9D4 /* MapSearchViewController.swift in Sources */,
 				94A5341425FE4F2400FBB9D4 /* UIStoryboardExtension.swift in Sources */,
 				94A5340625FE4E6C00FBB9D4 /* CLLocationExtension.swift in Sources */,
+				94D48A7027F6595B00576D3D /* CLLocationDegreesExtension.swift in Sources */,
 				94A5344C25FE570D00FBB9D4 /* Annotation.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -451,14 +455,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6GP943XXML;
+				DEVELOPMENT_TEAM = V28569HS5K;
 				INFOPLIST_FILE = MyARCL/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = vb.MyARCL;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vb.MyARCL;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -471,14 +475,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6GP943XXML;
+				DEVELOPMENT_TEAM = V28569HS5K;
 				INFOPLIST_FILE = MyARCL/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = vb.MyARCL;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vb.MyARCL;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;

@@ -7,7 +7,7 @@
 
 import CoreLocation
 
-protocol LocationDelegate: class {
+protocol LocationDelegate: AnyObject {
     func trackingLocation(for currentLocation: CLLocation)
     func trackingLocationDidFail(with error: Error)
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus)
@@ -16,11 +16,8 @@ protocol LocationDelegate: class {
 class Location: NSObject {
     
     var locationManager: CLLocationManager?
-    
     var delegate: LocationDelegate?
-    
     var currentLocation: CLLocation?
-    
     var direction: CLLocationDirection!
     
     override init() {
@@ -32,15 +29,10 @@ class Location: NSObject {
         auth(locationManager: locationManager)
         
         locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
-        
         locationManager.distanceFilter = 3
-        
         locationManager.headingFilter = 45
-        
         locationManager.pausesLocationUpdatesAutomatically = true
-        
         locationManager.allowsBackgroundLocationUpdates = false
-        
         locationManager.delegate = self
     }
 }
@@ -48,17 +40,13 @@ class Location: NSObject {
 extension Location: CLLocationManagerDelegate {
         
     func auth(locationManager: CLLocationManager) {
-        
         locationManager.requestWhenInUseAuthorization()
         
         switch(CLLocationManager.authorizationStatus()) {
-        
         case .authorizedAlways, .authorizedWhenInUse:
             startUpdatingLocation(locationManager: locationManager)
-            
         case .denied, .notDetermined, .restricted:
             stopUpdatingLocation(locationManager: locationManager)
-            
         @unknown default:
             locationManager.requestWhenInUseAuthorization()
         }
@@ -68,12 +56,12 @@ extension Location: CLLocationManagerDelegate {
         if newDirection.headingAccuracy < 0 { return }
         if newDirection.trueHeading > 0 {
             direction = newDirection.trueHeading
-            print("direction updated")
+            print("Direction updated.")
         }
     }
     
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locs: [CLLocation]) {
-        for loc in locs { delegate?.trackingLocation(for: loc) }
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        locations.forEach { delegate?.trackingLocation(for: $0) }
         currentLocation = manager.location
     }
     

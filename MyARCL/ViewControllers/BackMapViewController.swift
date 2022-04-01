@@ -14,7 +14,7 @@ class BackMapViewController: UIViewController {
     var backMapView = UIView()
     
     var mapsearchVC: MapSearchViewController!
-    var navVC: NavigationViewController!
+    var navigationVC: NavigationViewController!
     
     var currentEmbeddedVC: UIViewController {
         didSet {
@@ -55,6 +55,8 @@ class BackMapViewController: UIViewController {
         }
     }
     
+    // MARK: - Methods
+    
     func setupBackMapView() {
         self.backMapView.layoutIfNeeded()
         self.backMapView.backgroundColor = .blue
@@ -71,10 +73,10 @@ class BackMapViewController: UIViewController {
 
 extension BackMapViewController: MapSearchVCDelegate {
     
-    func navigateInAR(data: [RouteLeg]) {
-        let vc = NavigationViewController()
-        vc.routeData = data
-        self.navVC = vc
-        currentEmbeddedVC = navVC
+    func navigateInAR(with routeData: [RouteLeg]) {
+        let navVC = NavigationViewController()
+        navVC.routeData = routeData
+        self.navigationVC = navVC
+        currentEmbeddedVC = navigationVC
     }
 }
