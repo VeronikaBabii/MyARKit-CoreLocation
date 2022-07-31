@@ -1,9 +1,11 @@
 # MyARKit-CoreLocation
 
-Uni 3-year course work.  
+University 3-year course work - "Navigation in Augmented Reality based on ARKit and MapKit frameworks".
 
-iOS app to navigate in Augmented Reality.  
+Project:
+Swift iOS app to navigate in augmented reality by leveraging MapKit framework navigation route data and representing it as virtual 3D object on device's scene.
 
-ARKit + CoreLocation + MapKit.  
+Technologies:
+Apple frameworks: ARKit, CoreLocation, MapKit.
 
-Veronika Babii > 2021
+@ Veronika Babii 2021
